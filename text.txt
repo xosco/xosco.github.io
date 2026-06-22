@@ -10,3 +10,7 @@
     },
     "apiKeyHelper": "echo 'YOUR_API_KEY'"
 }
+
+
+https://cc.freemodel.dev
+fe_oa_1f7ba7b2c288d0e5341ffecb576048ccf8b3c4aeae975b67
