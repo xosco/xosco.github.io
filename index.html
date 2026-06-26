@@ -1,1 +1,456 @@
-Hello 
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>no.macro</title>
+    
+    <!-- Шрифты -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="shortcut icon" href="favicon.png" type="image/x-icon">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- 1. Базовые настройки --- */
+        :root {
+            --primary-color: #bef264;
+            --bg-color: #050505;
+            --card-bg: #0a0a0a;
+            --text-color: #ffffff;
+            --text-muted: #a1a1aa;
+            --danger-color: #ef4444; /* Красный цвет для важных сообщений */
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-transform: lowercase; 
+        }
+
+        /* --- 2. Фон --- */
+        .ambient-light {
+            position: fixed;
+            top: -100px; left: 50%; transform: translateX(-50%);
+            width: 80vw; height: 60vh;
+            background: radial-gradient(50% 50% at 50% 50%, rgba(190, 242, 100, 0.12) 0%, rgba(190, 242, 100, 0.03) 50%, rgba(0, 0, 0, 0) 100%);
+            filter: blur(100px); z-index: -1; pointer-events: none;
+            opacity: 0; animation: fadeInGlow 2.5s ease-out forwards;
+        }
+
+        .particles {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            mask-image: radial-gradient(circle at center, black 20%, transparent 80%);
+            -webkit-mask-image: radial-gradient(circle at center, black 20%, transparent 80%);
+            opacity: 0.3; z-index: -1; pointer-events: none;
+        }
+
+        /* --- 3. Навигация --- */
+        nav {
+            position: fixed;
+            top: 30px;
+            width: 90%;
+            max-width: 800px;
+            background: rgba(5, 5, 5, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 24px;
+            z-index: 100;
+            padding: 0;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow: hidden;
+            opacity: 0;
+            animation: slideDown 1s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+        }
+
+        .nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 24px;
+            width: 100%;
+            position: relative;
+            z-index: 2;
+            background: transparent;
+        }
+
+        .logo { font-weight: 800; font-size: 1.1rem; letter-spacing: -0.5px; cursor: pointer; color: #fff; }
+        .logo span { color: var(--primary-color); }
+
+        .desktop-menu { display: flex; align-items: center; gap: 32px; }
+
+        .nav-btn {
+            background: none; border: none; color: #a1a1aa; font-family: inherit; font-size: 0.85rem;
+            cursor: pointer; transition: color 0.3s; position: relative; padding: 5px 0;
+        }
+        .nav-btn:hover, .nav-btn.active { color: #fff; }
+        .nav-btn.active::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 100%; height: 1px; background: var(--primary-color); }
+
+        .btn-cta-nav {
+            background: transparent; border: 1px solid rgba(255, 255, 255, 0.15); color: #fff;
+            padding: 8px 20px; border-radius: 30px; font-size: 0.8rem; font-weight: 500;
+            cursor: pointer; transition: all 0.3s ease;
+        }
+        .btn-cta-nav:hover { background: #fff; color: #000; }
+
+        .hamburger {
+            display: none; width: 30px; height: 30px; position: relative; background: none; border: none; cursor: pointer; z-index: 10;
+        }
+        .hamburger span {
+            display: block; position: absolute; height: 2px; width: 22px; background: #fff; border-radius: 2px; opacity: 1; left: 4px; transform: rotate(0deg); transition: .25s ease-in-out;
+        }
+        .hamburger span:nth-child(1) { top: 8px; }
+        .hamburger span:nth-child(2) { top: 14px; }
+        .hamburger span:nth-child(3) { top: 20px; }
+
+        .hamburger.open span:nth-child(1) { top: 14px; transform: rotate(135deg); background: var(--primary-color); }
+        .hamburger.open span:nth-child(2) { opacity: 0; left: -60px; }
+        .hamburger.open span:nth-child(3) { top: 14px; transform: rotate(-135deg); background: var(--primary-color); }
+
+        .mobile-dropdown {
+            display: none; flex-direction: column; align-items: center; width: 100%;
+            background: rgba(255, 255, 255, 0.02); border-top: 1px solid rgba(255, 255, 255, 0.05);
+            max-height: 0; overflow: hidden; transition: max-height 0.4s ease-in-out, opacity 0.3s ease; opacity: 0;
+        }
+        .mobile-dropdown.open { max-height: 300px; opacity: 1; }
+
+        .mobile-nav-btn {
+            width: 100%; padding: 20px; text-align: center; background: none; border: none;
+            color: #a1a1aa; font-family: inherit; font-size: 1rem; cursor: pointer;
+            border-bottom: 1px solid rgba(255,255,255,0.03); transition: 0.3s;
+        }
+        .mobile-nav-btn:hover, .mobile-nav-btn.active { color: #fff; background: rgba(255,255,255,0.03); }
+        .mobile-cta-container { padding: 20px; width: 100%; display: flex; justify-content: center; }
+
+        @media (max-width: 768px) {
+            nav { border-radius: 16px; width: 94%; top: 15px; }
+            .desktop-menu { display: none; }
+            .hamburger { display: block; }
+            .mobile-dropdown { display: flex; }
+        }
+
+
+        /* --- 4. HERO & CONTENT --- */
+        .static-hero {
+            width: 100%; min-height: 90vh;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; padding: 150px 20px 50px; position: relative; z-index: 1;
+        }
+        h1 { font-size: 3.5rem; line-height: 1.15; margin-bottom: 30px; font-weight: 500; letter-spacing: -1px; opacity: 0; animation: fadeUp 1s ease-out 0.4s forwards; }
+        @media(min-width: 768px) { h1 { font-size: 5.5rem; margin-bottom: 20px; } }
+        @media(max-width: 768px) { h1 { font-size: 2.8rem; margin-bottom: 20px; } }
+
+        .highlight-green { color: var(--primary-color); position: relative; display: inline-block; transition: text-shadow 0.3s; }
+        .highlight-green:hover { text-shadow: 0 0 25px rgba(190, 242, 100, 0.4); }
+        .italic-style { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 400; color: #999; display: block; margin-top: 5px; }
+        p.subtitle { max-width: 550px; color: #666; font-size: 1.1rem; line-height: 1.5; margin: 0 auto 50px; opacity: 0; animation: fadeUp 1s ease-out 0.6s forwards; }
+
+        .cta-wrapper { opacity: 0; animation: fadeUp 1s ease-out 0.8s forwards; }
+        .cta-big {
+            display: inline-flex; align-items: center; gap: 15px;
+            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 6px 6px 6px 24px; border-radius: 100px;
+            color: #fff; text-decoration: none; font-weight: 500; font-size: 0.95rem;
+            transition: 0.3s; cursor: pointer;
+        }
+        .cta-big:hover { background: rgba(190, 242, 100, 0.05); border-color: var(--primary-color); transform: translateY(-2px); }
+        .icon-circle { width: 40px; height: 40px; background: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #000; transition: 0.4s; }
+        .cta-big:hover .icon-circle { transform: rotate(45deg) scale(1.1); }
+
+        #content-anchor { scroll-margin-top: 140px; }
+        #dynamic-container { width: 100%; display: flex; flex-direction: column; align-items: center; }
+
+        .tab-section { display: none; width: 100%; flex-direction: column; align-items: center; padding-bottom: 100px; animation: fadeInTab 0.6s ease-out forwards; }
+        .tab-section.active { display: flex; }
+        @keyframes fadeInTab { from { opacity: 0; transform: translateY(20px); filter: blur(5px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
+
+        .page-header { text-align: center; margin-bottom: 60px; padding: 0 20px; max-width: 800px; }
+        .page-title { font-size: 2.5rem; font-weight: 600; margin-bottom: 20px; color: #fff; }
+        .page-desc { font-size: 1.1rem; color: #888; line-height: 1.6; font-family: 'Playfair Display', serif; font-style: italic; }
+        @media(max-width: 768px) { .page-title { font-size: 2rem; } }
+
+        .features-grid { display: grid; grid-template-columns: 1fr; gap: 24px; width: 100%; max-width: 1100px; padding: 0 20px; }
+        @media(min-width: 768px) { .features-grid { grid-template-columns: repeat(3, 1fr); } }
+
+        .feature-card { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08); padding: 30px; border-radius: 12px; transition: 0.3s; position: relative; overflow: hidden; }
+        .feature-card:hover { border-color: rgba(190, 242, 100, 0.3); background: rgba(255, 255, 255, 0.04); transform: translateY(-5px); }
+        .card-number { font-size: 3rem; font-weight: 700; color: rgba(255, 255, 255, 0.05); position: absolute; top: 10px; right: 20px; }
+        .card-heading { font-size: 1.2rem; font-weight: 600; margin-bottom: 15px; color: #fff; position: relative; z-index: 1; }
+        .card-heading span { color: var(--primary-color); }
+        .card-text { font-size: 0.9rem; line-height: 1.6; color: #a1a1aa; position: relative; z-index: 1; }
+        .comparison-box { background: rgba(0,0,0,0.3); border-radius: 6px; padding: 10px; margin-top: 15px; font-family: monospace; font-size: 0.8rem; }
+        .comp-bad { color: #ff6b6b; display: block; margin-bottom: 5px; }
+        .comp-good { color: var(--primary-color); display: block; }
+
+
+        /* --- 6. FOOTER --- */
+        footer { width: 100%; position: relative; margin-top: 50px; padding-bottom: 0; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
+        .footer-banner { width: 90%; max-width: 1100px; background-color: var(--primary-color); border-radius: 24px; padding: 60px 50px; display: flex; justify-content: space-between; align-items: center; position: relative; overflow: hidden; margin-bottom: 80px; color: #000; }
+        .banner-content { position: relative; z-index: 2; max-width: 500px; }
+        .banner-text { font-size: 2rem; font-weight: 600; line-height: 1.1; margin-bottom: 30px; color: #000; }
+        .btn-black { background: #000; color: #fff; padding: 12px 28px; border-radius: 50px; font-weight: 600; font-size: 0.9rem; border: none; cursor: pointer; text-transform: uppercase; transition: transform 0.2s; }
+        .btn-black:hover { transform: scale(1.05); }
+        .banner-graphic { position: absolute; right: -50px; bottom: -100px; width: 400px; height: 400px; background: radial-gradient(circle, #000 20%, transparent 20%); background-size: 10px 10px; border-radius: 50%; opacity: 0.8; transform: rotate(-15deg); pointer-events: none; mask-image: radial-gradient(circle at center, black 40%, transparent 80%); -webkit-mask-image: radial-gradient(circle at center, black 40%, transparent 80%); }
+        .banner-bg-circle { position: absolute; right: -60px; bottom: -110px; width: 420px; height: 420px; background: radial-gradient(circle at 30% 30%, #222, #000); border-radius: 50%; opacity: 0.9; }
+
+        @media(max-width: 768px) {
+            .footer-banner { flex-direction: column; text-align: center; padding: 40px 25px; }
+            .banner-content { width: 100%; margin-bottom: 40px; }
+            .banner-text { font-size: 1.6rem; }
+            .banner-graphic { right: 50%; transform: translateX(50%); bottom: -150px; width: 300px; height: 300px; }
+            .banner-bg-circle { right: 50%; transform: translateX(50%); bottom: -160px; width: 320px; height: 320px; }
+        }
+
+        .footer-bar { width: 90%; max-width: 1100px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.1); padding: 30px 0 100px; position: relative; z-index: 2; }
+        .footer-logo { font-weight: 800; font-size: 1rem; color: #fff; }
+        .footer-logo span { color: var(--primary-color); }
+        .copyright { font-size: 0.75rem; color: #666; margin-top: 5px; }
+        @media(max-width: 768px) { .footer-bar { flex-direction: column; gap: 20px; padding-bottom: 60px; text-align: center; } }
+        .giant-footer-text { position: absolute; bottom: -2.5vw; left: 50%; transform: translateX(-50%); font-size: 22vw; font-weight: 900; line-height: 0.8; white-space: nowrap; color: transparent; background: linear-gradient(to top, rgba(190, 242, 100, 0.4), rgba(190, 242, 100, 0.05) 60%, transparent 100%); -webkit-background-clip: text; background-clip: text; pointer-events: none; z-index: 0; letter-spacing: -1vw; font-family: 'Inter', sans-serif; }
+        @media(max-width: 768px) { .giant-footer-text { font-size: 24vw; bottom: -10px; } }
+
+        /* --- Modal Styles (Обновлено) --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(10px); z-index: 1000;
+            display: flex; flex-direction: column; /* Изменено для вертикального стека */
+            justify-content: center; align-items: center;
+            opacity: 0; visibility: hidden; transition: 0.4s; padding: 20px;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+
+        /* Красный блок IMPORTANT */
+        .important-alert {
+            width: 100%; max-width: 400px;
+            background: rgba(220, 38, 38, 0.15); /* Полупрозрачный красный */
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 12px; /* Отступ от карточки */
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #fecaca; /* Светло-красный текст */
+            font-size: 0.85rem;
+            line-height: 1.4;
+            transform: translateY(30px) scale(0.98); /* Анимация как у карточки */
+            opacity: 0;
+            transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 10px 30px -10px rgba(220, 38, 38, 0.2);
+        }
+        
+        .important-alert strong { color: #ef4444; text-transform: uppercase; margin-right: 4px; }
+        .important-alert svg { flex-shrink: 0; color: #ef4444; }
+
+        /* Активация анимации */
+        .modal-overlay.active .important-alert { transform: translateY(0) scale(1); opacity: 1; }
+        .modal-overlay.active .modal-card { transform: translateY(0) scale(1); }
+
+        .modal-card {
+            background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.1); width: 100%; max-width: 400px;
+            border-radius: 16px; position: relative; transform: translateY(30px) scale(0.98);
+            transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); overflow: hidden;
+        }
+        
+        .card-visual { height: 140px; background: radial-gradient(circle at center, rgba(190, 242, 100, 0.15), transparent 70%); display: flex; align-items: center; justify-content: center; position: relative; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+        .product-icon { font-size: 3rem; color: var(--primary-color); filter: drop-shadow(0 0 15px rgba(190, 242, 100, 0.5)); animation: floatIcon 3s infinite ease-in-out; }
+        .close-btn { position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.1); border: none; color: #fff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; transition: 0.2s; z-index: 2; }
+        .close-btn:hover { background: rgba(255,255,255,0.2); }
+        .card-content { padding: 30px; }
+        .badge-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .badge { background: rgba(190, 242, 100, 0.1); color: var(--primary-color); border: 1px solid rgba(190, 242, 100, 0.2); padding: 4px 10px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; }
+        .card-title { font-size: 1.3rem; font-weight: 600; color: #fff; margin-bottom: 5px; letter-spacing: -0.5px; }
+        .card-price-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 20px; }
+        .price-val { font-size: 2rem; font-weight: 700; color: #fff; }
+        .price-period { color: #666; font-size: 0.9rem; }
+        .features-list { margin-bottom: 25px; border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); padding: 15px 0; }
+        .feature-item { display: flex; align-items: center; gap: 10px; color: #ccc; font-size: 0.9rem; margin-bottom: 8px; }
+        .check-icon { color: var(--primary-color); font-size: 0.9rem; }
+        .btn-buy { display: flex; justify-content: center; align-items: center; width: 100%; background-color: var(--primary-color); color: #000; text-decoration: none; padding: 16px 0; border-radius: 4px; font-weight: 600; font-size: 0.95rem; transition: 0.2s; box-shadow: 0 4px 20px rgba(190, 242, 100, 0.2); }
+        .btn-buy:hover { transform: translateY(-2px); background-color: #d1fa82; }
+        .secure-text { text-align: center; font-size: 0.75rem; color: #555; margin-top: 15px; display: flex; justify-content: center; gap: 5px; }
+
+        @keyframes floatIcon { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes fadeInGlow { from { opacity: 0; transform: translateX(-50%) scale(0.9); } to { opacity: 1; transform: translateX(-50%) scale(1); } }
+        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes fadeUp { from { transform: translateY(20px); opacity: 0; filter: blur(5px); } to { transform: translateY(0); opacity: 1; filter: blur(0); } }
+
+    </style>
+</head>
+<body>
+
+    <div class="ambient-light"></div>
+    <div class="particles"></div>
+
+    <!-- Обновленная Навигация -->
+    <nav>
+        <div class="nav-header">
+            <div class="logo" onclick="resetTabs()">no<span>.macro</span></div>
+            <div class="desktop-menu">
+                <button class="nav-btn" onclick="showTab('the-why')">the why</button>
+                <button class="nav-btn" onclick="showTab('how-it-works')">how it works</button>
+                <button class="btn-cta-nav" id="navBookBtnDesktop">get access</button>
+            </div>
+            <button class="hamburger" id="hamburgerBtn" aria-label="Menu"><span></span><span></span><span></span></button>
+        </div>
+        <div class="mobile-dropdown" id="mobileDropdown">
+            <button class="mobile-nav-btn" onclick="mobileTabClick('the-why')">the why</button>
+            <button class="mobile-nav-btn" onclick="mobileTabClick('how-it-works')">how it works</button>
+            <div class="mobile-cta-container">
+                <button class="btn-cta-nav" id="navBookBtnMobile" style="width: 100%;">get access</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 1. HERO SECTION -->
+    <div class="static-hero">
+        <h1>no more <span class="highlight-green">junk macros.</span><span class="italic-style">welcome to the new era.</span></h1>
+        <p class="subtitle"></p>
+        <div class="cta-wrapper">
+            <a href="#" class="cta-big" id="openModalBtn">
+                GET INSTANT ACCESS
+                <div class="icon-circle"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg></div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Якорь и Контент -->
+    <div id="content-anchor"></div>
+    <div id="dynamic-container">
+        <!-- Tab: The Why -->
+        <section id="the-why" class="tab-section">
+            <div class="page-header">
+                <h2 class="page-title">why we are <span class="highlight-green">superior</span></h2>
+                <p class="page-desc">while 99% of players rely on outdated hardware emulation, our software provides a fundamental technological leap.</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card"><div class="card-number">01</div><h3 class="card-heading">zero-latency <span>response</span></h3><p class="card-text">hardware macros travel through mouse switch → driver → os → game window, adding 15–30ms delay. our solution eliminates this pipeline.</p></div>
+                <div class="feature-card"><div class="card-number">02</div><h3 class="card-heading">stability <span>protection</span></h3><p class="card-text">standard tools clog your cpu. our software is architected to be lightweight, preserving your high framerates (240/360 fps).</p></div>
+                <div class="feature-card"><div class="card-number">03</div><h3 class="card-heading">lag-proof <span>consistency</span></h3><p class="card-text">because our software operates independently of the visual rendering engine, it functions perfectly even if your screen freezes.</p></div>
+            </div>
+        </section>
+        <!-- Tab: How It Works -->
+        <section id="how-it-works" class="tab-section">
+            <div class="page-header">
+                <h2 class="page-title">under the <span class="highlight-green">hood</span></h2>
+                <p class="page-desc">our technology bypasses the traditional constraints of the operating system to deliver raw speed and precision.</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card"><div class="card-number">01</div><h3 class="card-heading">Native Event <span>Processing</span></h3><p class="card-text">Utilizing the application’s native input handling mechanisms ensures instantaneous command registration, eliminating the latency typically associated with the standard driver stack</p></div>
+                <div class="feature-card"><div class="card-number">02</div><h3 class="card-heading">packet-level <span>sync</span></h3><p class="card-text">the software communicates via verified data packets. server receives the "pure" action command instantly.</p></div>
+                <div class="feature-card"><div class="card-number">03</div><h3 class="card-heading">async <span>multi-threading</span></h3><p class="card-text">we utilize an isolated background thread. logic is fully render-decoupled.</p><div class="comparison-box"><span class="comp-bad">// standard: slows with game</span><span class="comp-good">// ours: syncs with 60hz tick</span></div></div>
+            </div>
+        </section>
+    </div>
+
+    <!-- 3. FOOTER -->
+    <footer>
+        <div class="footer-banner">
+            <div class="banner-content"><div class="banner-text">hardware limits you. software liberates you.</div><button class="btn-black" id="footerBookBtn">get instant access</button></div>
+            <div class="banner-bg-circle"></div><div class="banner-graphic"></div>
+        </div>
+        <div class="footer-bar"><div><div class="footer-logo">no<span>.macro</span></div><div class="copyright">© 2026 nomacro_core_v1</div></div></div>
+        <div class="giant-footer-text">NO.MACRO</div>
+    </footer>
+
+
+    <!-- Modal (с красным блоком IMPORTANT) -->
+    <div class="modal-overlay" id="paymentModal">
+        
+        <!-- NEW IMPORTANT BLOCK -->
+        <div class="important-alert">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <div>
+                <strong>IMPORTANT: not avaiable now.</strong> For this macro to work, you need under 100 Ping and at least 180 FPS
+            </div>
+        </div>
+        
+        <div class="modal-card">
+            <div class="card-visual">
+                <button class="close-btn" id="closeModalBtn">&times;</button>
+                <div class="product-icon"><svg width="60" height="60" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+            </div>
+            <div class="card-content">
+                <div class="badge-row"><span class="badge">best value</span><span style="font-size: 0.75rem; color: #666;">.lua</span></div>
+                <h2 class="card-title">no.macro //</h2>
+                <div class="card-price-row"><span class="price-val">SOON FOR FREE</span><span class="price-period">/ lifetime access</span></div>
+                <div class="features-list">
+                    <div class="feature-item"><span class="check-icon">✓</span> life-time acces</div>
+                    <div class="feature-item"><span class="check-icon">✓</span> 24/7 priority support</div>
+                </div>
+                <a href="https://t.me/aetts" target="_blank" class="btn-buy">buy access now</a>
+                <div class="secure-text">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> secure checkout via telegram
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-section').forEach(section => section.classList.remove('active'));
+            document.querySelectorAll('.nav-btn, .mobile-nav-btn').forEach(btn => btn.classList.remove('active'));
+            const target = document.getElementById(tabId);
+            if (target) {
+                target.classList.add('active');
+                const desktopBtns = Array.from(document.querySelectorAll('.nav-btn'));
+                const activeDesktop = desktopBtns.find(b => b.innerText.replace(/\s/g, '-') === tabId);
+                if(activeDesktop) activeDesktop.classList.add('active');
+                const mobileBtns = Array.from(document.querySelectorAll('.mobile-nav-btn'));
+                const activeMobile = mobileBtns.find(b => b.innerText.replace(/\s/g, '-') === tabId);
+                if(activeMobile) activeMobile.classList.add('active');
+                document.getElementById('content-anchor').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const mobileDropdown = document.getElementById('mobileDropdown');
+        function toggleMobileMenu() { hamburgerBtn.classList.toggle('open'); mobileDropdown.classList.toggle('open'); }
+        hamburgerBtn.addEventListener('click', toggleMobileMenu);
+        function mobileTabClick(tabId) { showTab(tabId); toggleMobileMenu(); }
+
+        function resetTabs() {
+            document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn, .mobile-nav-btn').forEach(b => b.classList.remove('active'));
+            hamburgerBtn.classList.remove('open'); mobileDropdown.classList.remove('open');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        const openBtn = document.getElementById('openModalBtn');
+        const footerBtn = document.getElementById('footerBookBtn');
+        const closeBtn = document.getElementById('closeModalBtn');
+        const modal = document.getElementById('paymentModal');
+        const navBookBtnDesktop = document.getElementById('navBookBtnDesktop');
+        const navBookBtnMobile = document.getElementById('navBookBtnMobile');
+
+        function openModal(e) { e.preventDefault(); modal.classList.add('active'); }
+
+        openBtn.addEventListener('click', openModal);
+        if(navBookBtnDesktop) navBookBtnDesktop.addEventListener('click', openModal);
+        if(navBookBtnMobile) navBookBtnMobile.addEventListener('click', (e) => { toggleMobileMenu(); openModal(e); });
+        if(footerBtn) footerBtn.addEventListener('click', openModal);
+        closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
+
+        document.addEventListener('mousemove', (e) => {
+            const glow = document.querySelector('.ambient-light');
+            const x = (window.innerWidth - e.pageX) / 40;
+            const y = (window.innerHeight - e.pageY) / 40;
+            glow.style.transform = `translate(calc(-50% + ${x}px), ${y}px)`;
+        });
+    </script>
+</body>
+</html>
+
+
